@@ -1,5 +1,6 @@
 package services;
 
+import java.time.LocalDate;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -17,17 +18,11 @@ public class ContractService {
 	public void processContract(Contract contract, int months) {
 		double basicQuota = contract.getTotalValue() / months;
         for (int i = 1; i <= months; i++) {
-            Date date = addMonths(contract.getDate(), i);
-            double updatedQuota = basicQuota + onlinePaymentService.interest(basicQuota, i);
-            double fullQuota =  updatedQuota + onlinePaymentService.paymentFee(updatedQuota);
-            contract.addInstallment(new Installment(date, fullQuota));
+            LocalDate dueDate = contract.getDate().plusMonths(i);
+            double interest = onlinePaymentService.interest(basicQuota, i);
+            double fee = onlinePaymentService.paymentFee(basicQuota + interest);
+            double quota = basicQuota + interest + fee;
+            contract.getInstallments().add(new Installment(dueDate, quota));
         }
-	}
-	
-	private Date addMonths(Date date, int n) {
-		Calendar cal = Calendar.getInstance();
-		cal.setTime(date);
-		cal.add(Calendar.MONTH, n);
-		return cal.getTime();
 	}
 }
